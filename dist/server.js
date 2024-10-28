@@ -1,18 +1,13 @@
 import express from 'express';
 import inquirer from 'inquirer';
 import { pool, connectToDb } from './connections.js';
-import { QueryResult } from 'pg';
 import dotenv from 'dotenv';
 import Table from 'cli-table3';
-
 dotenv.config();
-
 const app = express();
 const PORT = process.env.Port || 3001;
-
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-
 const startInquirer = async () => {
     try {
         await connectToDb();
@@ -60,14 +55,14 @@ const startInquirer = async () => {
                     process.exit();
             }
         });
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error starting inquirer: ', err);
     }
 };
-
 const viewAllEmployees = async () => {
     try {
-        const result: QueryResult = await pool.query('SELECT employee.id AS "ID", employee.first_name AS "First Name", employee.last_name AS "Last Name", role.title AS "Job Title", department.name AS "Department", role.salary AS "Salary", CONCAT(managers.first_name, \' \', managers.last_name) AS "Manager" FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee managers ON employee.manager_id = managers.id');
+        const result = await pool.query('SELECT employee.id AS "ID", employee.first_name AS "First Name", employee.last_name AS "Last Name", role.title AS "Job Title", department.name AS "Department", role.salary AS "Salary", CONCAT(managers.first_name, \' \', managers.last_name) AS "Manager" FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee managers ON employee.manager_id = managers.id');
         const table = new Table({
             head: ['ID', 'First Name', 'Last Name', 'Title', 'Department', 'Salary', 'Manager'],
             colWidths: [5, 15, 15, 15, 15, 15, 15],
@@ -76,15 +71,17 @@ const viewAllEmployees = async () => {
             table.push([row["ID"], row["First Name"], row["Last Name"], row["Job Title"], row["Department"], row["Salary"], row["Manager"]]);
         });
         console.log(table.toString());
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error viewing all employees: ', err);
-    } finally {
+    }
+    finally {
         startInquirer();
     }
-}
+};
 const viewAllRoles = async () => {
     try {
-        const result: QueryResult = await pool.query('SELECT role.id AS "ID", role.title AS "Title", department.name AS "Department", role.salary AS "Salary" FROM role LEFT JOIN department ON role.department_id = department.id');
+        const result = await pool.query('SELECT role.id AS "ID", role.title AS "Title", department.name AS "Department", role.salary AS "Salary" FROM role LEFT JOIN department ON role.department_id = department.id');
         const table = new Table({
             head: ['ID', 'Title', 'Department', 'Salary'],
             colWidths: [5, 15, 15, 15],
@@ -93,16 +90,17 @@ const viewAllRoles = async () => {
             table.push([row["ID"], row["Title"], row["Department"], row["Salary"]]);
         });
         console.log(table.toString());
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error viewing all roles: ', err);
-    } finally {
+    }
+    finally {
         startInquirer();
     }
-}
-
+};
 const viewAllDepartments = async () => {
     try {
-        const result: QueryResult = await pool.query('SELECT id AS "ID", name AS "Department" FROM department');
+        const result = await pool.query('SELECT id AS "ID", name AS "Department" FROM department');
         const table = new Table({
             head: ['ID', 'Department'],
             colWidths: [5, 15],
@@ -111,18 +109,18 @@ const viewAllDepartments = async () => {
             table.push([row["ID"], row["Department"]]);
         });
         console.log(table.toString());
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error viewing all departments: ', err);
-    } finally {
+    }
+    finally {
         startInquirer();
     }
-}
-
+};
 const addEmployee = async () => {
     try {
         const employees = await pool.query('SELECT * From employee');
         const roles = await pool.query('SELECT * From role');
-
         const employee = await inquirer.prompt([
             {
                 type: 'input',
@@ -148,13 +146,14 @@ const addEmployee = async () => {
             }
         ]);
         await pool.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)', [employee.first_name, employee.last_name, employee.role_id, employee.manager_id]);
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error adding employee: ', err);
-    } finally {
+    }
+    finally {
         startInquirer();
     }
-}
-
+};
 const addRole = async () => {
     try {
         const departments = await pool.query('SELECT * From department');
@@ -177,13 +176,14 @@ const addRole = async () => {
             }
         ]);
         await pool.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [role.title, role.salary, role.department_id]);
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error adding role: ', err);
     }
     finally {
         startInquirer();
     }
-}
+};
 const addDepartment = async () => {
     try {
         const department = await inquirer.prompt([
@@ -194,13 +194,14 @@ const addDepartment = async () => {
             }
         ]);
         await pool.query('INSERT INTO department (name) VALUES ($1)', [department.name]);
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error adding department: ', err);
-    } finally {
+    }
+    finally {
         startInquirer();
     }
-}
-
+};
 const updateEmployeeRole = async () => {
     try {
         const employees = await pool.query('SELECT * From employee');
@@ -220,20 +221,18 @@ const updateEmployeeRole = async () => {
             },
         ]);
         await pool.query('UPDATE employee SET role_id = $1 WHERE id = $2', [employee.role_id, employee.id]);
-    } catch (err) {
+    }
+    catch (err) {
         console.error('Error updating employee role: ', err);
-    } finally {
+    }
+    finally {
         startInquirer();
     }
-}
-
+};
 app.use((_req, res) => {
     res.status(404).send('404: Page not found');
 });
-
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-    
 });
-
 startInquirer();
